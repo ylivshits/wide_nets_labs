@@ -44,7 +44,6 @@ def hamming_code(block):
             ind += 1
         res.append(i)
 
-
     for i in range(len(res)):
         for bit in range(8):
             if ((i >> bit) & 1):
@@ -52,18 +51,36 @@ def hamming_code(block):
 
     return res
 
+cnt_zero = 0
+cnt_one = 0
+cnt_many = 0
+
 def one_error(a):
+    global cnt_zero 
+    global cnt_one 
+    global cnt_many 
     if (random.randrange(2) == 0):
+        cnt_zero += 1
         return a
-    a[random.randrange(len(a))] ^= 1
+    a[random.randrange(len(a)-1)+1] ^= 1
+    cnt_one += 1
     return a
 
 def many_errors(a, n):
+    global cnt_zero 
+    global cnt_one 
+    global cnt_many 
     if (random.randrange(2) == 0):
+        cnt_zero += 1
         return a
     tmp = random.randrange(n)
+    tmp += 1
+    if (tmp == 1):
+        cnt_one += 1
+    if (tmp > 1):
+        cnt_many += 1
     for i in range(tmp):
-        a[random.randrange(len(a))] ^= 1
+        a[random.randrange(len(a)-1)+1] ^= 1
     return a
 
 
@@ -71,6 +88,10 @@ sock = socket.socket()
 sock.connect(('192.168.100.68', 9090))
 
 for test in range(3):
+    cnt_zero = 0
+    cnt_one = 0
+    cnt_many = 0
+
     if (test == 0):
         print('TEST WITHOUT ERRORS')
     if (test == 1):
@@ -86,6 +107,10 @@ for test in range(3):
     for i in range(len(tmp)):
         tmp[i] = hamming_code(tmp[i])
 
+    if (test == 0):
+        for i in range(len(tmp)):
+            cnt_zero += 1
+
     if (test == 1):
         for i in range(len(tmp)):
             tmp[i] = one_error(tmp[i])
@@ -94,6 +119,12 @@ for test in range(3):
         for i in range(len(tmp)):
             tmp[i] = many_errors(tmp[i], 5)
     
+
+    print('Number of blocks generated with zero mistakes: ', cnt_zero)
+    print('Number of blocks generated with one mistake: ', cnt_one)
+    print('Number of blocks generated with many mistakes: ', cnt_many)
+
+
     bar = unite_blocks(tmp)
     
     sock.send(bar)
